@@ -83,6 +83,9 @@ type V6ServerConf struct {
 
 	LeaseDuration uint32 `yaml:"lease_duration"` // in seconds
 
+	RaSlaacOnly  bool `yaml:"ra_slaac_only"`
+	RaAllowSlaac bool `yaml:"ra_allow_slaac"`
+
 	ipStart    net.IP        // starting IP address for dynamic leases
 	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
 	dnsIPAddrs []net.IP      // IPv6 addresses to return to DHCP clients as DNS server addresses

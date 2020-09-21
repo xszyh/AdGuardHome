@@ -4,6 +4,7 @@ package dhcpd
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"net"
 	"sync"
@@ -537,6 +538,152 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	}
 }
 
+type icmpv6RA struct {
+	managedAddressConfiguration bool
+	otherConfiguration          bool
+	prefix                      net.IP
+	sourceLinkLayerAddress      net.HardwareAddr
+	recursiveDNSServer          net.IP
+	mtu                         uint32
+}
+
+// ICMPv6:
+// type[1]
+// code[1]
+// chksum[2]
+// body:
+//   Cur Hop Limit[1]
+//   Flags[1]: MO......
+//   Router Lifetime[2]
+//   Reachable Time[4]
+//   Retrans Timer[4]
+//   Option=Prefix Information(3):
+//     Type[1]
+//     Length * 8bytes[1]
+//     Prefix Length[1]
+//     Flags[1]: LA......
+//     Valid Lifetime[4]
+//     Preferred Lifetime[4]
+//     Reserved[4]
+//     Prefix[16]
+//   Option=MTU(5):
+//     Type[1]
+//     Length * 8bytes[1]
+//     Reserved[2]
+//     MTU[4]
+//   Option=Source link-layer address(1):
+//     Link-Layer Address[6]
+//   Option=Recursive DNS Server(25):
+//     Type[1]
+//     Length * 8bytes[1]
+//     Reserved[2]
+//     Lifetime[4]
+//     Addresses of IPv6 Recursive DNS Servers[16]
+func createICMPv6RouterAdvertisementPacket(ra icmpv6RA) []byte {
+	data := make([]byte, 88)
+	i := 0
+
+	// ICMPv6:
+
+	data[i] = 134 // type
+	i++
+	data[i] = 0 // code
+	i++
+	data[i] = 0 // chksum
+	data[i+1] = 0
+	i += 2
+
+	// RouterAdvertisement:
+
+	data[i] = 64 // Cur Hop Limit[1]
+	i++
+
+	data[i] = 0 // Flags[1]: MO......
+	if ra.managedAddressConfiguration {
+		data[i] |= 0x80
+	}
+	if ra.otherConfiguration {
+		data[i] |= 0x40
+	}
+	i++
+
+	binary.BigEndian.PutUint16(data[i:], 1800) // Router Lifetime[2]
+	i += 2
+	binary.BigEndian.PutUint32(data[i:], 0) // Reachable Time[4]
+	i += 4
+	binary.BigEndian.PutUint32(data[i:], 0) // Retrans Timer[4]
+	i += 4
+
+	// Option=Prefix Information:
+
+	data[i] = 3 // Type
+	i++
+	data[i] = 4 // Length
+	i++
+	data[i] = 64 // Prefix Length[1]
+	i++
+	data[i] = 0xc0 // Flags[1]
+	i++
+	binary.BigEndian.PutUint32(data[i:], 3600) // Valid Lifetime[4]
+	i += 4
+	binary.BigEndian.PutUint32(data[i:], 3600) // Preferred Lifetime[4]
+	i += 4
+	binary.BigEndian.PutUint32(data[i:], 0) // Reserved[4]
+	i += 4
+	copy(data[i:], ra.prefix[:8]) // Prefix[16]
+	binary.BigEndian.PutUint32(data[i+8:], 0)
+	binary.BigEndian.PutUint32(data[i+12:], 0)
+	i += 16
+
+	// Option=MTU:
+
+	data[i] = 5 // Type
+	i++
+	data[i] = 1 // Length
+	i++
+	binary.BigEndian.PutUint16(data[i:], 0) // Reserved[2]
+	i += 2
+	binary.BigEndian.PutUint32(data[i:], ra.mtu) // MTU[4]
+	i += 4
+
+	// Option=Source link-layer address:
+
+	data[i] = 1 // Type
+	i++
+	data[i] = 1 // Length
+	i++
+	copy(data[i:], ra.sourceLinkLayerAddress) // Link-Layer Address[6]
+	i += 6
+
+	// Option=Recursive DNS Server:
+
+	data[i] = 1 // Type
+	i++
+	data[i] = 3 // Length
+	i++
+	binary.BigEndian.PutUint16(data[i:], 0) // Reserved[2]
+	i += 2
+	binary.BigEndian.PutUint32(data[i:], 3600) // Lifetime[4]
+	i += 4
+	copy(data[i:], ra.recursiveDNSServer) // Addresses of IPv6 Recursive DNS Servers[16]
+	i += 16
+
+	chksum := icmpv6Checksum(data)
+	binary.BigEndian.PutUint16(data[2:], chksum)
+	return data
+}
+
+func icmpv6Checksum(b []byte) uint16 {
+
+}
+
+func (s *v6Server) raPacketsSender() {
+	for {
+		// ra := icmpv6RA{}
+		// data := createICMPv6RouterAdvertisementPacket(ra)
+	}
+}
+
 // Get IPv6 address list
 func getIfaceIPv6(iface net.Interface) []net.IP {
 	addrs, err := iface.Addrs()
@@ -598,6 +745,9 @@ func (s *v6Server) Start() error {
 		err = s.srv.Serve()
 		log.Debug("DHCPv6: srv.Serve: %s", err)
 	}()
+
+	go s.raPacketsSender()
+
 	return nil
 }
 
