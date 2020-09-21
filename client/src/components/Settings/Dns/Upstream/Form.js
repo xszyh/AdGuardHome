@@ -160,7 +160,7 @@ const Form = ({
 
     return <form onSubmit={handleSubmit} className="form--upstream">
         <div className="row">
-            <label className="form__label ml-3" htmlFor={UPSTREAM_DNS_NAME}>
+            <label className="col form__label" htmlFor={UPSTREAM_DNS_NAME}>
                 <Trans components={components}>upstream_dns_help</Trans>
                 {' '}
                 <Trans components={[
