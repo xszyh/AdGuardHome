@@ -7,7 +7,7 @@ import PageTitle from '../ui/PageTitle';
 import Examples from './Examples';
 import Check from './Check';
 import { getTextareaCommentsHighlight, syncScroll } from '../../helpers/highlightTextareaComments';
-import { isFirefox } from '../../helpers/constants';
+import { COMMENT_LINE_DEFAULT_TOKEN, isFirefox } from '../../helpers/constants';
 import '../ui/texareaCommentsHighlight.css';
 
 class CustomRules extends Component {
@@ -76,7 +76,7 @@ class CustomRules extends Component {
                                 this.ref,
                                 userRules,
                                 classnames({ 'form-control--textarea-large': isFirefox }),
-                                ['#', '!'],
+                                [COMMENT_LINE_DEFAULT_TOKEN, '!'],
                             )}
                         </div>
                         <div className="card-actions">

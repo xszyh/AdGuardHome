@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Trans, withTranslation } from 'react-i18next';
+import { COMMENT_LINE_DEFAULT_TOKEN } from '../../../../helpers/constants';
 
 const Examples = (props) => (
     <div className="list leading-loose">
@@ -126,7 +127,7 @@ const Examples = (props) => (
                 </span>
             </li>
             <li>
-                <code># comment</code> –&nbsp;
+                <code>{COMMENT_LINE_DEFAULT_TOKEN} comment</code> –&nbsp;
                 <span>
                     <Trans>example_upstream_comment</Trans>
                 </span>

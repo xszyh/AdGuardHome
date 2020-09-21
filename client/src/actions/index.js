@@ -7,7 +7,13 @@ import escapeRegExp from 'lodash/escapeRegExp';
 import React from 'react';
 import { splitByNewLine, sortClients } from '../helpers/helpers';
 import {
-    BLOCK_ACTIONS, CHECK_TIMEOUT, STATUS_RESPONSE, SETTINGS_NAMES, FORM_NAME, GETTING_STARTED_LINK,
+    BLOCK_ACTIONS,
+    CHECK_TIMEOUT,
+    STATUS_RESPONSE,
+    SETTINGS_NAMES,
+    FORM_NAME,
+    GETTING_STARTED_LINK,
+    COMMENT_LINE_DEFAULT_TOKEN,
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
@@ -294,7 +300,9 @@ export const testUpstream = (config) => async (dispatch) => {
     try {
         const values = { ...config };
         values.bootstrap_dns = splitByNewLine(values.bootstrap_dns);
-        values.upstream_dns = splitByNewLine(values.upstream_dns);
+        /* Filter out the comments */
+        values.upstream_dns = splitByNewLine(values.upstream_dns)
+            .filter((line) => !line.startsWith(COMMENT_LINE_DEFAULT_TOKEN));
 
         const upstreamResponse = await apiClient.testUpstream(values);
         const testMessages = Object.keys(upstreamResponse)

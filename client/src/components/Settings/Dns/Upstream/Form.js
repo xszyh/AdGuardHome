@@ -13,7 +13,7 @@ import {
     UPSTREAM_CONFIGURATION_WIKI_LINK,
 } from '../../../../helpers/constants';
 import { testUpstream } from '../../../../actions';
-import { removeEmptyLines } from '../../../../helpers/helpers';
+import { removeEmptyLines, trimLinesAndRemoveEmpty } from '../../../../helpers/helpers';
 import { getTextareaCommentsHighlight, syncScroll } from '../../../../helpers/highlightTextareaComments';
 import '../../../ui/texareaCommentsHighlight.css';
 
@@ -73,6 +73,7 @@ const renderTextareaWithHighlightField = (props) => {
             ...props,
             disabled: !!upstream_dns_file,
             onScroll,
+            normalizeOnBlur: trimLinesAndRemoveEmpty,
         })}
         {getTextareaCommentsHighlight(ref, upstream_dns)}
     </>;

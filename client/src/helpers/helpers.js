@@ -317,6 +317,12 @@ export const removeEmptyLines = (text) => splitByNewLine(text)
     .join('\n');
 
 /**
+ * @param {string} input
+ * @returns {string}
+ */
+export const trimLinesAndRemoveEmpty = (input) => input.split('\n').map((line) => line.trim()).filter(Boolean).join('\n');
+
+/**
  * Normalizes the topClients array
  *
  * @param {Object[]} topClients

@@ -570,3 +570,4 @@ export const CACHE_CONFIG_FIELDS = {
 };
 
 export const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1;
+export const COMMENT_LINE_DEFAULT_TOKEN = '#';

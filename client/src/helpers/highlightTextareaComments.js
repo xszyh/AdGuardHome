@@ -1,7 +1,6 @@
 import React from 'react';
 import classnames from 'classnames';
-
-const COMMENT_LINE_DEFAULT_TOKEN = '#';
+import { COMMENT_LINE_DEFAULT_TOKEN } from './constants';
 
 const renderHighlightedLine = (line, idx, commentLineTokens = [COMMENT_LINE_DEFAULT_TOKEN]) => {
     const isComment = commentLineTokens.some((token) => line.trim().startsWith(token));
