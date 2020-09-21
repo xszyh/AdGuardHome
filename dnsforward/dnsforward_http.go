@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
@@ -107,20 +108,6 @@ func checkBootstrap(addr string) error {
 	return nil
 }
 
-func isComment(line string) bool {
-	return strings.HasPrefix(line, "#")
-}
-
-func FilterComments(lines []string) []string {
-	var upstream []string
-	for _, l := range lines {
-		if !isComment(l) {
-			upstream = append(upstream, l)
-		}
-	}
-	return upstream
-}
-
 // nolint(gocyclo) - we need to check each JSON field separately
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	req := dnsConfigJSON{}
@@ -131,15 +118,10 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if js.Exists("upstream_dns") {
-		// No need to validate comments
-		upstreams := FilterComments(req.Upstreams)
-
-		if len(upstreams) != 0 {
-			err = ValidateUpstreams(upstreams)
-			if err != nil {
-				httpError(r, w, http.StatusBadRequest, "wrong upstreams specification: %s", err)
-				return
-			}
+		err = ValidateUpstreams(req.Upstreams)
+		if err != nil {
+			httpError(r, w, http.StatusBadRequest, "wrong upstreams specification: %s", err)
+			return
 		}
 	}
 
@@ -271,8 +253,23 @@ type upstreamJSON struct {
 	BootstrapDNS []string `json:"bootstrap_dns"` // Bootstrap DNS
 }
 
+func isUpstream(line string) bool {
+	return !strings.HasPrefix(line, "#")
+}
+
+func filterOutComments(lines []string) []string {
+	return util.Filter(lines, isUpstream)
+}
+
 // ValidateUpstreams validates each upstream and returns an error if any upstream is invalid or if there are no default upstreams specified
 func ValidateUpstreams(upstreams []string) error {
+	// No need to validate comments
+	upstreams = filterOutComments(upstreams)
+
+	if len(upstreams) == 0 {
+		return nil
+	}
+
 	var defaultUpstreamFound bool
 	for _, u := range upstreams {
 		d, err := validateUpstream(u)
@@ -414,7 +411,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkDNS(input string, bootstrap []string) error {
-	if isComment(input) {
+	if !isUpstream(input) {
 		return nil
 	}
 

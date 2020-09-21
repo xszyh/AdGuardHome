@@ -249,7 +249,7 @@ func (s *Server) prepareUpstreamSettings() error {
 	} else {
 		upstreams = s.conf.UpstreamDNS
 	}
-	upstreams = FilterComments(upstreams)
+	upstreams = filterOutComments(upstreams)
 	upstreamConfig, err := proxy.ParseUpstreamsConfig(upstreams, s.conf.BootstrapDNS, DefaultTimeout)
 	if err != nil {
 		return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)

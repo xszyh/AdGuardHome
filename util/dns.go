@@ -68,3 +68,13 @@ func DNSUnreverseAddr(s string) net.IP {
 
 	return nil // unknown suffix
 }
+
+func Filter(array []string, callback func(string) bool) []string {
+	var filtered []string
+	for _, l := range array {
+		if callback(l) {
+			filtered = append(filtered, l)
+		}
+	}
+	return filtered
+}
